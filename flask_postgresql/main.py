@@ -1,30 +1,54 @@
 from flask import Flask
+import os
+from psycopg2 import connect
 
 app=Flask(__name__)
 
 
-product={
-  "id": 11,
-  "title": "perfume Oil",
-  "description": "Mega Discount, Impression of A...",
-  "price": 13,
-  "discountPercentage": 8.4,
-  "rating": 4.26,
-  "stock": 65,
-  "brand": "Impression of Acqua Di Gio",
-  "category": "fragrances",
-  "thumbnail": "https://i.dummyjson.com/data/products/11/thumbnail.jpg",
-  "images": [
-    "https://i.dummyjson.com/data/products/11/1.jpg",
-    "https://i.dummyjson.com/data/products/11/2.jpg",
-    "https://i.dummyjson.com/data/products/11/3.jpg",
-    "https://i.dummyjson.com/data/products/11/thumbnail.jpg"
-  ]
-}
+class Connection:
+    def __new__(cls) -> object:
+
+        return connect(
+            database=os.getenv("DB"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("HOST"),
+            port=os.getenv("PORT")
+        )
 
 @app.get("/product")
 def get_product():
-  return product
+    conn=Connection()
+    cursor=conn.cursor()
+
+    query="""
+        select * from product
+    """
+    cursor.execute(query)
+
+    result=cursor.fetchall()
+
+    response_data=[]
+
+    for item in result:
+      response_data.append(
+        {
+          "id": item[0],
+          "title": item[1],
+          "description": item[2],
+          "price": item[3],
+          "discountPercentage": item[4],
+          "rating": item[5],
+          "stock": item[6],
+          "brand": item[7],
+          "category": item[8],
+          "thumbnail": item[9],
+          "images": item[10]
+        }
+      )
+    conn.close()
+
+    return {"result":response_data} 
 
 if __name__=="__main__":
   app.run(debug=True, port=5000, host="0.0.0.0")
