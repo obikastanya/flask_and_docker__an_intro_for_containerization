@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+
+  flask_postgresql_db_container:
+    container_name: flask_postgresql_db_container
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: flask_postgresql
+    ports:
+      - protocol: tcp
+        target: 5432
+        published: 5433
+    volumes:
+      - type: volume
+        source: flask_postgresql_volume
+        target: /var/lib/postgresql/data
+    networks:
+      - flask_postgresql_network
+  
+  flask_postgresql_container:
+    container_name: flask_postgresql_container
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: flask_postgresql_image:latest
+    ports:
+      - protocol: tcp
+        target: 5000
+        published: 5000
+    networks:
+      - flask_postgresql_network
+    environment:
+      PYTHONUNBUFFERED: 1
+      DB: flask_postgresql
+      DB_USER: root
+      DB_PASSWORD: root
+      HOST: flask_postgresql_db_container
+      PORT: 5432
+
+volumes:
+  flask_postgresql_volume:
+    name: flask_postgresql_volume
+    
+networks:
+  flask_postgresql_network:
+    name: flask_postgresql_network
+    driver: bridge
